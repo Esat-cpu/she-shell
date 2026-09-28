@@ -33,6 +33,7 @@ def test_logical_operators(run_with_she):
     res = run_with_she(command)
 
     assert res.stdout == "test\nand\n"
+    assert res.stderr == ""
 
 
 def test_redirection_append_and_truncate(run_with_she, tmp_path):
@@ -105,6 +106,7 @@ def test_pipe(run_with_she):
     res = run_with_she(command)
 
     assert res.stdout == "ThiS iS a TeST\n"
+    assert res.stderr == ""
 
 
 def test_script_execution_comments_and_exit(run_file_with_she, tmp_path):
@@ -120,6 +122,7 @@ def test_script_execution_comments_and_exit(run_file_with_she, tmp_path):
     res = run_file_with_she(tmp_path / "test.sh")
 
     assert res.stdout == "hello\n"
+    assert res.stderr == ""
 
 
 def test_file_error(run_file_with_she, tmp_path):
