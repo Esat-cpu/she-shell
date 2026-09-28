@@ -21,6 +21,7 @@ typedef enum {
     T_AND,
     T_OR,
     T_SEMI,
+    T_AMPER,
 
     T_REDIR_OUT,
     T_REDIR_OUT_APPEND,

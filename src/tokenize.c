@@ -107,6 +107,11 @@ void tokenize(const char* input, TokenArray* t) {
                 ch++;
                 continue;
             }
+            // Background operator (&)
+            else
+                add_token(t, "&", NORMAL, T_AMPER);
+
+            continue;
         }
 
         // Redirection out

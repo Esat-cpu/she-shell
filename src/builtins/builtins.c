@@ -4,11 +4,15 @@
 #include "builtins/cd.h"
 #include "builtins/exit_builtin.h"
 #include "builtins/set.h"
+#include "builtins/jobs.h"
+#include "builtins/bg.h"
 
 
 struct Builtin builtins[] = {
     { .cmd_name = "cd",     .func = cd           },
     { .cmd_name = "exit",   .func = exit_builtin },
     { .cmd_name = "set",    .func = set },
+    { .cmd_name = "jobs",   .func = jobs },
+    { .cmd_name = "bg",     .func = bg },
     { NULL, NULL },
 };

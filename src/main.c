@@ -15,6 +15,8 @@
 #include "argument_parser.h"
 #include "util.h"
 #include "executor.h"
+#include "job_control.h"
+#include "signals.h"
 #include "shell.h"
 
 
@@ -26,16 +28,16 @@ static const char* HIS_FILE = ".she_history";
 static const char* RC_FILE = ".sherc";
 
 static char* command = NULL;
-static volatile sig_atomic_t in_readline = false;
-static int title_fd = -1;
 
 
 static void clean_exit(void) {
     free(command);
 
+    free_bg_jobs();
+
     if (shell.interactive) {
-        if (title_fd != -1)
-            close(title_fd);
+        if (shell.terminal != 0)
+            close(shell.terminal);
 
         char history_file[PATH_MAX];
 
@@ -55,30 +57,14 @@ static void set_shell_name(const char *argv0) {
 }
 
 
-// Clear input and go to the next line
-static void sigint_handler(int sig) {
-    (void)sig;  // suppress unused warning
-    shell.exit_code = 130;
-    write(STDOUT_FILENO, "\n", 1);
-
-    char prompt[PATH_MAX];
-    prompt_build(prompt, PATH_MAX);
-
-    if (in_readline) {
-        rl_replace_line("", 0);
-        rl_on_new_line();
-        rl_set_prompt(prompt);
-        rl_redisplay();
-    }
-}
-
-
 // This will be executed on shell's startup
 static void setup(int argc, char** argv) {
     atexit(clean_exit);
     set_shell_name(argv[0]);
     shell.argc = argc;
     shell.argv = argv;
+
+    start_bg_job_array();
 
     struct passwd* pw = getpwuid(getuid());
 
@@ -87,10 +73,27 @@ static void setup(int argc, char** argv) {
 
     shell.user = pw->pw_name;
 
+    signal(SIGCHLD, sigchld_handler);
+
     if (isatty(STDIN_FILENO)) {
         shell.interactive = true;
-        signal(SIGINT, sigint_handler);
-        title_fd = open("/dev/tty", O_WRONLY);
+
+        // Handle signals
+        signal(SIGINT,  sigint_handler);
+        signal(SIGTSTP, SIG_IGN);
+        signal(SIGQUIT, SIG_IGN);
+        signal(SIGTTIN, SIG_IGN);
+        signal(SIGTTOU, SIG_IGN);
+
+        // Terminal fd
+        int title_fd = open("/dev/tty", O_RDWR);
+        shell.terminal = (title_fd < 0) ? STDIN_FILENO : title_fd;
+
+        // Shell is the process group leader
+        // This group is terminal's foreground process group
+        setpgid(0, 0);
+        shell.pgid = getpid();
+        tcsetpgrp(shell.terminal, shell.pgid);
     }
     else
         shell.interactive = false;
@@ -110,6 +113,7 @@ static void setup(int argc, char** argv) {
         read_history(history_file);
     }
 
+    // Set environment variables if not set
     setenv("HOME", shell.home, 0);
     setenv("USER", shell.user, 0);
     setenv("SHELL", pw->pw_shell, 0);
@@ -160,14 +164,15 @@ int main(int argc, char** argv) {
 
     while (1) {
         shell.home = getenv("HOME");
+        manage_bg_jobs();
 
         if (shell.interactive) {
             char prompt[PATH_MAX];
             prompt_build(prompt, PATH_MAX);
 
             // Set/Reset terminal title before prompt.
-            if (title_fd != -1)
-                dprintf(title_fd, "\033]0;she\007");
+            if (shell.terminal != 0)
+                dprintf(shell.terminal, "\033]0;she\007");
 
             free(command);
 
@@ -179,8 +184,8 @@ int main(int argc, char** argv) {
                 exit(shell.exit_code);
 
             // Set terminal title to running command.
-            if (title_fd != -1)
-                dprintf(title_fd, "\033]0;%s\007", command);
+            if (shell.terminal != 0)
+                dprintf(shell.terminal, "\033]0;%s\007", command);
 
             add_history(command);
         }

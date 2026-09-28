@@ -4,25 +4,27 @@
 
 #include "parser.h"
 #include "ast.h"
-#include "tokenize.h"
+#include "token.h"
 
 /*
 * Grammar (lowest to highest precedence):
 *       sequence    = logical, { ";", logical }, [ ";" ]
-*       logical     = pipe, { ("&&" | "||"), pipe }
+*       logical     = async_list, { ("&&" | "||"), async_list }
+*       async_list  = pipe, { "&", pipe }, [ "&" ]
 *       pipe        = command, { "|", command }
 *       command     = { redirection }, word, { redirection | word }
 *       redirection = redir_operator, word
 */
 
-// Returns true if this token ends a command segment (|, &&, ||, ;).
+// Returns true if this token ends a command segment (|, &&, ||, ;, &).
 // Redirection tokens are NOT terminators -- they're part of the
 // command itself and are handled inside make_cmd_node.
 static bool is_command_terminator(Token token) {
     return token.token_type == T_PIPE
         || token.token_type == T_OR
         || token.token_type == T_AND
-        || token.token_type == T_SEMI;
+        || token.token_type == T_SEMI
+        || token.token_type == T_AMPER;
 }
 
 
@@ -65,8 +67,40 @@ static Node* parse_pipe(Parser* p) {
 }
 
 
-static Node* parse_logical(Parser* p) {
+// Asynchronous list
+// A trailing '&' is valid. In that case, the operator node's
+// right arm will be NULL.
+static Node* parse_async_list(Parser* p) {
     Node* left = parse_pipe(p);
+    if (!left) return NULL;
+
+    while (p->pos < p->end && p->tokens[p->pos].token_type == T_AMPER) {
+        Node* op = make_operator_node(p->tokens[p->pos]);
+        p->pos++;
+
+        Node* right = NULL;
+
+        if (p->pos < p->end) {
+            right = parse_pipe(p);
+            if (!right) {
+                free(op);
+                free_ast(left);
+                return NULL;
+            }
+        }
+
+        op->operator.left = left;
+        op->operator.right = right;
+
+        left = op;
+    }
+
+    return left;
+}
+
+
+static Node* parse_logical(Parser* p) {
+    Node* left = parse_async_list(p);
     if (!left) return NULL;
 
     while (p->pos < p->end && (p->tokens[p->pos].token_type == T_AND
@@ -74,7 +108,7 @@ static Node* parse_logical(Parser* p) {
         Node* op = make_operator_node(p->tokens[p->pos]);
         p->pos++;
 
-        Node* right = parse_pipe(p);
+        Node* right = parse_async_list(p);
         if (!right) {
             free(op);
             free_ast(left);

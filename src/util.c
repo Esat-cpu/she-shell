@@ -41,6 +41,20 @@ void* smalloc(size_t size) {
 }
 
 
+void* scalloc(size_t size) {
+    void* p = malloc(size);
+
+    if (!p) {
+        print_err("malloc", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    memset(p, 0, size);
+
+    return p;
+}
+
+
 void* srealloc(void* ptr, size_t new_size) {
     void* p = realloc(ptr, new_size);
 

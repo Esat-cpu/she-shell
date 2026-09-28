@@ -30,6 +30,11 @@ struct ShellState {
     bool interactive;
     // If true, the shell exits on certain command failures
     bool errexit;
+
+    // Terminal fd
+    int terminal;
+    // Shell's process group
+    pid_t pgid;
 };
 
 

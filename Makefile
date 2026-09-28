@@ -157,7 +157,7 @@ test-unit-asan:
 	$(MAKE) test-unit ASAN=1
 
 test-py: $(TARGET_EXEC)
-	pytest $(TEST_DIR)/integration --she-path $(TARGET_EXEC)
+	pytest -vv $(TEST_DIR)/integration --she-path $(TARGET_EXEC)
 
 test-py-asan:
 	$(MAKE) test-py ASAN=1
