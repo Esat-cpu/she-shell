@@ -14,20 +14,20 @@ volatile sig_atomic_t in_readline = false;
 
 
 static void update_job_state(Job* job) {
-    bool all_exited  = true;
+    bool all_completed  = true;
     bool all_stopped = true;
 
     for_each_process(p, job) {
-        if (p->state != EXITED) {
-            all_exited  = false;
+        if (p->state != COMPLETED) {
+            all_completed = false;
 
             if (p->state != STOPPED)
                 all_stopped = false;
         }
     }
 
-    if (all_exited)
-        job->status = EXITED;
+    if (all_completed)
+        job->status = COMPLETED;
     else if (all_stopped)
         job->status = STOPPED;
     else

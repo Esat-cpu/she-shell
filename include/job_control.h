@@ -17,7 +17,7 @@
 typedef enum {
     RUNNING=1,
     STOPPED,
-    EXITED,
+    COMPLETED,
 } RunState;
 
 
@@ -30,7 +30,7 @@ typedef struct Process {
 } Process;
 
 
-typedef struct Job {
+typedef struct {
     Process*  pipeline;
     pid_t     pgid;
     RunState  status;
@@ -50,6 +50,8 @@ int create_process(Job* job, int (*f)(Node*, TaskData),
                             Node* node, TaskData data);
 
 int mark_status(Job* job, pid_t pid, int status);
+
+void wait_for_job_blocking(Job* job);
 
 void start_bg_job_array(void);
 

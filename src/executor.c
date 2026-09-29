@@ -157,7 +157,6 @@ static void execute_cmd_node(Node* node, TaskData data) {
         }
     }
 
-    int status;
     Job job = {
         .pipeline = NULL,
         .status = RUNNING,
@@ -170,29 +169,7 @@ static void execute_cmd_node(Node* node, TaskData data) {
         int a = create_process(&job, worker, node, data);
 
         if (a == EXIT_SUCCESS) {
-            Process* p = job.pipeline;
-            pid_t pid;
-
-            do
-                pid = waitpid(p->pid, &status, WUNTRACED);
-            while (!mark_status(&job, pid, status)
-                    && job.status != STOPPED);
-
-            if (WIFSIGNALED(p->status)) {
-                shell.exit_code = 128 + WTERMSIG(p->status);
-                free_processes(&job);
-            }
-
-            else if (WIFSTOPPED(p->status)) {
-                job.status = STOPPED;
-                add_job_to_bg_jobs(job);
-                shell.exit_code = 128 + WSTOPSIG(p->status);
-            }
-
-            else {
-                shell.exit_code = WEXITSTATUS(p->status);
-                free_processes(&job);
-            }
+            wait_for_job_blocking(&job);
 
             // Set terminal's foreground process group to shell's
             if (shell.interactive)
@@ -270,7 +247,6 @@ static void pipe_handle(Node* node, TaskData data) {
     data.exec_builtins = true;
 
     Job job = { .pipeline = NULL, .status = RUNNING };
-    int status;
 
     int e = pipe_traversal(node, &job, &data);
 
@@ -293,34 +269,8 @@ static void pipe_handle(Node* node, TaskData data) {
         return;
     }
 
-    if (data.fg) {
-        pid_t pid;
-
-        do
-            pid = waitpid(-job.pgid, &status, WUNTRACED);
-        while (!mark_status(&job, pid, status)
-                && job.status != STOPPED);
-
-        Process* last = job.pipeline;
-
-        if (WIFSIGNALED(last->status)) {
-            shell.exit_code = 128 + WTERMSIG(last->status);
-            free_processes(&job);
-        }
-
-        else if (WIFSTOPPED(last->status)) {
-            job.status = STOPPED;
-            add_job_to_bg_jobs(job);
-            shell.exit_code = 128 + WTERMSIG(last->status);
-            kill(-job.pgid, SIGTSTP);
-        }
-
-        else {
-            shell.exit_code = WEXITSTATUS(last->status);
-            free_processes(&job);
-        }
-
-    }
+    if (data.fg)
+        wait_for_job_blocking(&job);
     else
         add_job_to_bg_jobs(job);
 

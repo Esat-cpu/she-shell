@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/wait.h>
 
 #include "job_control.h"
 #include "task_data.h"
@@ -72,7 +73,7 @@ int mark_status(Job* job, pid_t pid, int status) {
                     job->status = STOPPED;
                 }
                 else
-                    p->state = EXITED;
+                    p->state = COMPLETED;
 
                 return 0;
             }
@@ -87,6 +88,34 @@ int mark_status(Job* job, pid_t pid, int status) {
     else {
         print_err("waitpid", strerror(errno));
         return -1;
+    }
+}
+
+
+void wait_for_job_blocking(Job* job) {
+    int status;
+    pid_t pid;
+
+    do
+        pid = waitpid(-job->pgid, &status, WUNTRACED);
+    while(!mark_status(job, pid, status) && job->status != STOPPED);
+
+    Process* p = job->pipeline;
+
+    if (WIFSIGNALED(p->status)) {
+        shell.exit_code = 128 + WTERMSIG(p->status);
+        free_processes(job);
+    }
+
+    else if (WIFSTOPPED(p->status)) {
+        job->status = STOPPED;
+        add_job_to_bg_jobs(*job);
+        shell.exit_code = 128 + WSTOPSIG(p->status);
+    }
+
+    else {
+        shell.exit_code = WEXITSTATUS(p->status);
+        free_processes(job);
     }
 }
 
@@ -155,8 +184,8 @@ void manage_bg_jobs(void) {
     size_t last_alive = 0;
 
     for_each_bg_job(j) {
-        if (j->status == EXITED && !j->notified) {
-            printf("[%d]\t%d\texited\n", j->job_id, j->pgid);
+        if (j->status == COMPLETED && !j->notified) {
+            printf("[%d]\t%d\tcompleted\n", j->job_id, j->pgid);
             free_processes(j);
             j->notified = true;
         }
