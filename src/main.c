@@ -64,8 +64,6 @@ static void setup(int argc, char** argv) {
     shell.argc = argc;
     shell.argv = argv;
 
-    start_bg_job_array();
-
     struct passwd* pw = getpwuid(getuid());
 
     if (!(shell.home = getenv("HOME")))

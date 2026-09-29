@@ -7,6 +7,8 @@
 #include "task_data.h"
 #include "ast.h"
 
+#define MAX_BG_JOBS 64
+
 #define for_each_process(p, job) \
     for (Process* (p) = (job)->pipeline; (p) != NULL; (p) = (p)->next)
 
@@ -40,9 +42,8 @@ typedef struct {
 
 
 typedef struct {
-    Job* jobs;
+    Job jobs[MAX_BG_JOBS];
     int  len;
-    int  cap;
 } BgJobs;
 
 

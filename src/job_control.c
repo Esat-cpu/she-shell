@@ -14,8 +14,6 @@
 #include "ast.h"
 #include "shell.h"
 
-#define START_BG_JOB_ARRAY_SIZE 2
-
 
 int create_process(Job* job, int (*f)(Node*, TaskData),
                             Node* node, TaskData data) {
@@ -135,24 +133,6 @@ void free_processes(Job* job) {
 
 BgJobs bg_jobs;
 
-void start_bg_job_array(void) {
-    bg_jobs.jobs = scalloc(START_BG_JOB_ARRAY_SIZE * sizeof(Job));
-    bg_jobs.len = 0;
-    bg_jobs.cap = START_BG_JOB_ARRAY_SIZE;
-}
-
-
-static void j_ensure_capacity(BgJobs* j, int n) {
-    if (j->len + n >= j->cap) {
-        j->cap *= 2;
-        j->jobs = srealloc(j->jobs, j->cap * sizeof(Job));
-    }
-    else if ((j->len + n < j->cap/2) && (j->cap/2) >= START_BG_JOB_ARRAY_SIZE) {
-        j->cap /= 2;
-        j->jobs = srealloc(j->jobs, j->cap * sizeof(Job));
-    }
-}
-
 
 int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data) {
     Job job = {
@@ -161,8 +141,6 @@ int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data) {
         .status = RUNNING,
         .job_id = bg_jobs.len + 1,
     };
-
-    j_ensure_capacity(&bg_jobs, 1);
 
     int c = create_process(&job, f, node, data);
     if (c) return c;
@@ -174,7 +152,6 @@ int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data) {
 
 
 void add_job_to_bg_jobs(Job job) {
-    j_ensure_capacity(&bg_jobs, 1);
     job.job_id = bg_jobs.len + 1;
     bg_jobs.jobs[bg_jobs.len++] = job;
 }
@@ -200,7 +177,6 @@ void manage_bg_jobs(void) {
             last_alive = j->job_id;
     }
 
-    j_ensure_capacity(&bg_jobs, -(bg_jobs.len - last_alive));
     bg_jobs.len = last_alive;
 }
 
@@ -209,5 +185,4 @@ void free_bg_jobs(void) {
     for_each_bg_job(j) {
         free_processes(j);
     }
-    free(bg_jobs.jobs);
 }
