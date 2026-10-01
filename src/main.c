@@ -76,6 +76,9 @@ static void setup(int argc, char** argv) {
     if (isatty(STDIN_FILENO)) {
         shell.interactive = true;
 
+        while (tcgetpgrp(shell.terminal) != (shell.pgid = getpgrp()))
+            kill(-shell.pgid, SIGTTIN);
+
         // Handle signals
         signal(SIGINT,  sigint_handler);
         signal(SIGTSTP, SIG_IGN);
@@ -90,7 +93,6 @@ static void setup(int argc, char** argv) {
         // Shell is the process group leader
         // This group is terminal's foreground process group
         setpgid(0, 0);
-        shell.pgid = getpid();
         tcsetpgrp(shell.terminal, shell.pgid);
     }
     else
