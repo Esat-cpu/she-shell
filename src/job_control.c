@@ -26,8 +26,10 @@ int create_process(Job* job, int (*f)(Node*, TaskData),
         signal(SIGQUIT, SIG_DFL);
         signal(SIGTTIN, SIG_DFL);
         signal(SIGTTOU, SIG_DFL);
-        signal(SIGCHLD, SIG_DFL);
 
+        // Add this process to job's process group.
+        // This is also done in the parent to avoid a race where the process
+        // receives a signal before the parent can add it to the group.
         setpgid(0, job->pgid);
 
         _exit(f(node, data));
@@ -64,6 +66,7 @@ int mark_status(Job* job, pid_t pid, int status) {
     if (pid > 0) {
         for_each_process(p, job) {
             if (p->pid == pid) {
+                job->changed = true;
                 p->status = status;
 
                 if (WIFSTOPPED(status)) {
@@ -157,23 +160,62 @@ void add_job_to_bg_jobs(Job job) {
 }
 
 
+static void update_job_state(Job* job) {
+    bool all_completed  = true;
+    bool all_stopped    = true;
+
+    for_each_process(p, job) {
+        if (p->state != COMPLETED) {
+            all_completed = false;
+
+            if (p->state != STOPPED)
+                all_stopped = false;
+        }
+    }
+
+    if (all_completed)
+        job->status = COMPLETED;
+    else if (all_stopped)
+        job->status = STOPPED;
+    else
+        job->status = RUNNING;
+}
+
+
+// Notify background job state changes and free completed job processes.
 void manage_bg_jobs(void) {
-    size_t last_alive = 0;
+    int status;
+    pid_t pid;
 
     for_each_bg_job(j) {
-        if (j->status == COMPLETED && !j->notified) {
-            printf("[%d]\t%d\tcompleted\n", j->job_id, j->pgid);
-            free_processes(j);
-            j->notified = true;
-        }
-        else if (j->status == STOPPED) {
-            if (!j->notified)
-                printf("[%d]\t%d\tstopped\n", j->job_id, j->pgid);
+        do
+            pid = waitpid(-j->pgid, &status, WUNTRACED|WNOHANG);
+        while (!mark_status(j, pid, status));
+    }
 
-            last_alive = j->job_id;
-            j->notified = true;
+    // Completed jobs are not removed from the array, so the last active job
+    // ID determines the new array length.
+    size_t last_alive = 0;
+    for_each_bg_job(j) {
+        if (j->changed) {
+            j->changed = false;
+
+            update_job_state(j);
+
+            if (j->status == COMPLETED && !j->notified) {
+                printf("[%d]\t%d\tcompleted\n", j->job_id, j->pgid);
+                free_processes(j);
+                j->notified = true;
+            }
+            else if (j->status == STOPPED) {
+                if (!j->notified)
+                    printf("[%d]\t%d\tstopped\n", j->job_id, j->pgid);
+
+                j->notified = true;
+            }
         }
-        else if (j->status == RUNNING)
+
+        if (j->status != COMPLETED)
             last_alive = j->job_id;
     }
 
@@ -181,7 +223,7 @@ void manage_bg_jobs(void) {
 }
 
 
-void free_bg_jobs(void) {
+void free_bg_job_processes(void) {
     for_each_bg_job(j) {
         free_processes(j);
     }

@@ -135,6 +135,7 @@ static int worker(Node* node, TaskData data) {
 
 
 // Call this function only with command (T_WORD) nodes.
+// Executes builtins in the shell's main process.
 // Stores the executed command's exit code in shell.exit_code.
 // Always returns.
 static void execute_cmd_node(Node* node, TaskData data) {
@@ -229,6 +230,7 @@ static void pipe_handle(Node* node, TaskData data) {
 
     int pipefd[pipe_counter][2];
 
+    // Initialize pipes
     for (size_t i = 0; i < pipe_counter; ++i) {
         int p = pipe(pipefd[i]);
 
@@ -242,6 +244,7 @@ static void pipe_handle(Node* node, TaskData data) {
     data.pipe.pipefd   = pipefd;
     data.pipe.count    = pipe_counter;
     data.pipe.pos      = 0;
+
     data.apply_pipe    = true;
     data.apply_redir   = true;
     data.exec_builtins = true;
@@ -342,11 +345,9 @@ ExeResult execute_line(char* line, char **error_out) {
         return E_SUCCESS;
 
     TokenArray ta;
-    Node* root = NULL;
-
     tokenize(line, &ta);
 
-    int e = expand_param(&ta, error_out);
+    int e = perform_expansions(&ta, error_out);
     if (e) {
         free_tokens(ta);
 
@@ -356,7 +357,7 @@ ExeResult execute_line(char* line, char **error_out) {
         return E_PARSE_ERROR;
     }
 
-    root = parse(ta.tokens, ta.len, error_out);
+    Node* root = parse(ta.tokens, ta.len, error_out);
 
     if (root == NULL) {
         free_tokens(ta);
@@ -401,6 +402,8 @@ ExeResult execute_file(const char* filename) {
 
     while (fgets(line, MAX_LINE_SIZE, file)) {
         ExeResult ex = execute_line(line, &error_message);
+
+        manage_bg_jobs();
 
         if (ex == E_PARSE_ERROR) {
             fprintf(stderr, "%s: line %zu: %s\n",

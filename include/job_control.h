@@ -33,11 +33,13 @@ typedef struct Process {
 
 
 typedef struct {
+    // NOTE: New processes are added to the head of the process list.
     Process*  pipeline;
     pid_t     pgid;
     RunState  status;
     int       job_id;
     bool      notified;
+    bool      changed;
 } Job;
 
 
@@ -64,7 +66,7 @@ void manage_bg_jobs(void);
 
 void free_processes(Job* job);
 
-void free_bg_jobs(void);
+void free_bg_job_processes(void);
 
 extern BgJobs bg_jobs;
 

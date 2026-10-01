@@ -7,6 +7,8 @@
 
 int bg(int argc, char** argv) {
     (void)argc;
+    manage_bg_jobs();
+
     if (bg_jobs.len == 0) {
         print_err(argv[0], "you have no background jobs");
         return 1;

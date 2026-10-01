@@ -31,7 +31,9 @@ TokenArray new_token_array(void) {
 
 int add_token(TokenArray* t, char* value,
                 QuoteType quote_t, TokenType token_t) {
+    // Ignore unquoted empty tokens.
     if (strlen(value) == 0 && quote_t == NORMAL) return 0;
+
     ensure_capacity(t, 1);
 
     Token token = {

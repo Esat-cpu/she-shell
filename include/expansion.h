@@ -4,6 +4,6 @@
 #include "token.h"
 
 
-int expand_param(TokenArray* ta, char **error_out);
+int perform_expansions(TokenArray* ta, char **error_out);
 
 #endif

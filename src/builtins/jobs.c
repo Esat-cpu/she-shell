@@ -7,6 +7,7 @@
 int jobs(int argc, char** argv) {
     (void)argc;
     (void)argv;
+    manage_bg_jobs();
 
     if (bg_jobs.len == 0)
         return 0;

@@ -33,7 +33,7 @@ static char* command = NULL;
 static void clean_exit(void) {
     free(command);
 
-    free_bg_jobs();
+    free_bg_job_processes();
 
     if (shell.interactive) {
         if (shell.terminal != 0)
@@ -70,8 +70,6 @@ static void setup(int argc, char** argv) {
         shell.home = pw->pw_dir;
 
     shell.user = pw->pw_name;
-
-    signal(SIGCHLD, sigchld_handler);
 
     if (isatty(STDIN_FILENO)) {
         shell.interactive = true;
@@ -164,7 +162,6 @@ int main(int argc, char** argv) {
 
     while (1) {
         shell.home = getenv("HOME");
-        manage_bg_jobs();
 
         if (shell.interactive) {
             char prompt[PATH_MAX];
@@ -207,6 +204,8 @@ int main(int argc, char** argv) {
             print_err(error_message, NULL);
             free(error_message);
         }
+
+        manage_bg_jobs();
 
         if (shell.errexit && shell.exit_code != 0)
             exit(shell.exit_code);

@@ -7,12 +7,16 @@
 
 typedef struct {
     int (*pipefd)[2];
+
+    // Position of the current command in the pipeline.
     size_t pos;
+
     size_t count;
 } Pipe;
 
 
 typedef struct TaskData {
+    // `fg` must be initialized to true and only changed by execute_ast().
     bool fg;
     bool exec_builtins;
     bool apply_redir;

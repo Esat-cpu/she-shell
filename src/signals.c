@@ -1,54 +1,16 @@
 #include <signal.h>
+#include <unistd.h>
 #include <sys/wait.h>
 #include <limits.h>
 #include <stdio.h> // IWYU pragma: keep
 #include <readline/readline.h>
 
 #include "signals.h"
-#include "job_control.h"
 #include "prompt_build.h"
 #include "shell.h"
 
 
-volatile sig_atomic_t in_readline = false;
-
-
-static void update_job_state(Job* job) {
-    bool all_completed  = true;
-    bool all_stopped = true;
-
-    for_each_process(p, job) {
-        if (p->state != COMPLETED) {
-            all_completed = false;
-
-            if (p->state != STOPPED)
-                all_stopped = false;
-        }
-    }
-
-    if (all_completed)
-        job->status = COMPLETED;
-    else if (all_stopped)
-        job->status = STOPPED;
-    else
-        job->status = RUNNING;
-}
-
-
-void sigchld_handler(int sig) {
-    (void)sig;
-    int status;
-    pid_t pid;
-
-    for_each_bg_job(j) {
-        do
-            pid = waitpid(-j->pgid, &status, WUNTRACED|WNOHANG);
-        while (!mark_status(j, pid, status));
-
-        update_job_state(j);
-    }
-}
-
+volatile sig_atomic_t in_readline   = false;
 
 // Clear input and go to the next line
 void sigint_handler(int sig) {

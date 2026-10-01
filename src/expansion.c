@@ -181,6 +181,9 @@ static void expand_glob_in_token(Token* token) {
 static void expand_tilde(TokenArray* ta) {
     if (!shell.home) return;
 
+    // Expand `~` to the user's home directory when it is the first character
+    // of a NORMAL quote type token. A `~` followed by an alphanumeric
+    // character is not expanded.
     for_each_token (t, ta) {
         if (t->quote_type == NORMAL && t->value[0] == '~'
                 && (!t->value[1] || !isalnum((unsigned char)t->value[1])))
@@ -195,7 +198,7 @@ static void expand_tilde(TokenArray* ta) {
 }
 
 
-int expand_param(TokenArray* ta, char **error_out) {
+int perform_expansions(TokenArray* ta, char **error_out) {
     expand_tilde(ta);
 
     for_each_token (token, ta) {
