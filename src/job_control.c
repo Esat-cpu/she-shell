@@ -15,6 +15,15 @@
 #include "shell.h"
 
 
+typedef struct Process {
+    pid_t    pid;
+    RunState state;
+    int      status;
+
+    struct Process *next;
+} Process;
+
+
 int create_process(Job* job, int (*f)(Node*, TaskData),
                             Node* node, TaskData data) {
     pid_t pid = fork();

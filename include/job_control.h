@@ -23,13 +23,7 @@ typedef enum {
 } RunState;
 
 
-typedef struct Process {
-    pid_t    pid;
-    RunState state;
-    int      status;
-
-    struct Process *next;
-} Process;
+typedef struct Process Process;
 
 
 typedef struct {

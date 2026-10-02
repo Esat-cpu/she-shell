@@ -16,6 +16,15 @@
 *       redirection = redir_operator, word
 */
 
+
+typedef struct {
+    Token* tokens;
+    size_t pos;
+    size_t end;
+    char* error_message;
+} Parser;
+
+
 // Returns true if this token ends a command segment (|, &&, ||, ;, &).
 // Redirection tokens are NOT terminators -- they're part of the
 // command itself and are handled inside make_cmd_node.
