@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "token.h"
 #include "util.h"
+#include "str_util.h"
 
 
 // Appends a redirection to the end of the linked list, allocating
@@ -82,6 +83,7 @@ Node* make_cmd_node(Token* tokens,
     node->cmd.argc = 0;
     node->cmd.argv = smalloc(sizeof(char*) * (count + 1));
     node->cmd.redir_list = NULL;
+    node->cmd.command = NULL;
 
     size_t i = start;
     while (i < end) {
@@ -115,6 +117,9 @@ Node* make_cmd_node(Token* tokens,
         return NULL;
     }
 
+    String str = from_argv(node->cmd.argv);
+    node->cmd.command = str.data;
+
     return node;
 }
 
@@ -139,6 +144,7 @@ void free_ast(Node* root) {
     if (root->type == T_WORD) {
         free(root->cmd.argv);
         free_redir_list(root->cmd.redir_list);
+        free(root->cmd.command);
     }
     else {
         free_ast(root->operator.left);

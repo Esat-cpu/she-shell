@@ -31,6 +31,7 @@ typedef struct Node {
             int argc;
             char** argv;
             RedirList* redir_list;
+            char* command;
         } cmd;
 
         struct {

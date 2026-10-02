@@ -11,6 +11,7 @@
 #include "job_control.h"
 #include "task_data.h"
 #include "util.h"
+#include "str_util.h"
 #include "ast.h"
 #include "shell.h"
 
@@ -56,11 +57,26 @@ int create_process(Job* job, int (*f)(Node*, TaskData),
             tcsetpgrp(shell.terminal, job->pgid);
 
         Process* p = scalloc(sizeof(Process));
-        p->pid   = pid;
-        p->state = RUNNING;
-        p->next  = job->pipeline;
+        p->pid     = pid;
+        p->state   = RUNNING;
+        p->next    = job->pipeline;
+
         job->pipeline = p;
         job->status   = RUNNING;
+
+        String str = new_string();
+
+        if (job->command) {
+            add_slice_to_str(&str, job->command);
+            add_slice_to_str(&str, " | ");
+        }
+
+        add_slice_to_str(&str, node->cmd.command);
+        free(node->cmd.command);
+        node->cmd.command = NULL;
+
+        free(job->command);
+        job->command = str.data;
     }
     else {
         print_err("fork", strerror(errno));
@@ -138,6 +154,9 @@ void free_processes(Job* job) {
         free(tmp);
     }
     job->pipeline = NULL;
+
+    free(job->command);
+    job->command = NULL;
 }
 
 
@@ -157,7 +176,7 @@ int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data) {
     if (c) return c;
 
     add_job_to_bg_jobs(&job);
-    printf("[%d]\t%d\n", job.job_id, job.pgid);
+    printf("[%d]\t%d\t%s\n", job.job_id, job.pgid, job.command);
 
     return 0;
 }
@@ -212,13 +231,15 @@ void manage_bg_jobs(void) {
             update_job_state(j);
 
             if (j->status == COMPLETED && !j->notified) {
-                printf("[%d]\t%d\tcompleted\n", j->job_id, j->pgid);
+                printf("[%d]\t%d\tcompleted\t%s\n",
+                            j->job_id, j->pgid, j->command);
                 free_processes(j);
                 j->notified = true;
             }
             else if (j->status == STOPPED) {
                 if (!j->notified)
-                    printf("[%d]\t%d\tstopped\n", j->job_id, j->pgid);
+                    printf("[%d]\t%d\tstopped\t%s\n",
+                                j->job_id, j->pgid, j->command);
 
                 j->notified = true;
             }

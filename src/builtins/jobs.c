@@ -14,9 +14,9 @@ int jobs(int argc, char** argv) {
 
     for_each_bg_job(j) {
         if (j->status == RUNNING)
-            printf("[%d]\t%d\n", j->job_id, j->pgid);
+            printf("[%d]\t%d\t%s\n", j->job_id, j->pgid, j->command);
         else if (j->status == STOPPED)
-            printf("[%d]\t%d\tstopped\n", j->job_id, j->pgid);
+            printf("[%d]\t%d\tstopped\t%s\n", j->job_id, j->pgid, j->command);
     }
 
     return 0;

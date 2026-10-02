@@ -276,7 +276,7 @@ static void pipe_handle(Node* node, TaskData data) {
         wait_for_job_blocking(&job);
     else {
         add_job_to_bg_jobs(&job);
-        printf("[%d]\t%d\n", job.job_id, job.pgid);
+        printf("[%d]\t%d\t%s\n", job.job_id, job.pgid, job.command);
     }
 
     if (shell.interactive)

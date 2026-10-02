@@ -23,4 +23,6 @@ void add_int_to_str(String *str, int num);
 
 void clear_str(String *str);
 
+String from_argv(char** argv);
+
 #endif

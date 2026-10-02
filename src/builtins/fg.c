@@ -76,17 +76,21 @@ int fg(int argc, char** argv) {
         }
     }
 
-    // Remove job from bg jobs by marking it COMPLETED and notified
-    job->notified = true;
-    job->status = COMPLETED;
-
     Job fg_job = {
         .pgid     = job->pgid,
         .pipeline = job->pipeline,
+        .command  = job->command,
         .status   = RUNNING,
     };
 
-    printf("[%d]\t%d\tcontinued\n", job->job_id, fg_job.pgid);
+    // Remove job from bg jobs by marking it COMPLETED and notified
+    job->notified = true;
+    job->status = COMPLETED;
+    job->command = NULL;
+    job->pipeline = NULL;
+
+    printf("[%d]\t%d\tcontinued\t%s\n",
+                fg_job.job_id, fg_job.pgid, fg_job.command);
 
     if (shell.interactive)
         tcsetpgrp(shell.terminal, fg_job.pgid);

@@ -32,6 +32,7 @@ typedef struct {
     pid_t     pgid;
     RunState  status;
     int       job_id;
+    char*     command;
     bool      notified;
     bool      changed;
 } Job;

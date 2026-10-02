@@ -82,7 +82,7 @@ int bg(int argc, char** argv) {
     job->notified = false;
     job->status = RUNNING;
     kill(-job->pgid, SIGCONT);
-    printf("[%d]\t%d\tcontinued\n", job->job_id, job->pgid);
+    printf("[%d]\t%d\tcontinued\t%s\n", job->job_id, job->pgid, job->command);
 
     return EXIT_SUCCESS;
 }

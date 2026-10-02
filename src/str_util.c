@@ -80,3 +80,16 @@ void clear_str(String *str) {
     str->len = 0;
     str->data[0] = '\0';
 }
+
+
+String from_argv(char** argv) {
+    String str = new_string();
+
+    for (size_t i = 0; argv[i]; ++i) {
+        if (i > 0) add_chr_to_str(&str, ' ');
+
+        add_slice_to_str(&str, argv[i]);
+    }
+
+    return str;
+}
