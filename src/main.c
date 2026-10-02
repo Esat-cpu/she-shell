@@ -90,8 +90,11 @@ static void setup(int argc, char** argv) {
 
         // Shell is the process group leader
         // This group is terminal's foreground process group
-        setpgid(0, 0);
-        tcsetpgrp(shell.terminal, shell.pgid);
+        if (tcgetpgrp(shell.terminal) != shell.pgid) {
+            setpgid(0, 0);
+            shell.pgid = getpgrp();
+            tcsetpgrp(shell.terminal, shell.pgid);
+        }
     }
     else
         shell.interactive = false;
