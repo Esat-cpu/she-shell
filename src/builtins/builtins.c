@@ -6,6 +6,7 @@
 #include "builtins/set.h"
 #include "builtins/jobs.h"
 #include "builtins/bg.h"
+#include "builtins/fg.h"
 
 
 struct Builtin builtins[] = {
@@ -14,5 +15,6 @@ struct Builtin builtins[] = {
     { .cmd_name = "set",    .func = set },
     { .cmd_name = "jobs",   .func = jobs },
     { .cmd_name = "bg",     .func = bg },
+    { .cmd_name = "fg",     .func = fg },
     { NULL, NULL },
 };

@@ -274,8 +274,10 @@ static void pipe_handle(Node* node, TaskData data) {
 
     if (data.fg)
         wait_for_job_blocking(&job);
-    else
-        add_job_to_bg_jobs(job);
+    else {
+        add_job_to_bg_jobs(&job);
+        printf("[%d]\t%d\n", job.job_id, job.pgid);
+    }
 
     if (shell.interactive)
         tcsetpgrp(shell.terminal, shell.pgid);

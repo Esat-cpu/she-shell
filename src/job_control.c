@@ -119,7 +119,7 @@ void wait_for_job_blocking(Job* job) {
 
     else if (WIFSTOPPED(p->status)) {
         job->status = STOPPED;
-        add_job_to_bg_jobs(*job);
+        add_job_to_bg_jobs(job);
         shell.exit_code = 128 + WSTOPSIG(p->status);
     }
 
@@ -151,21 +151,21 @@ int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data) {
         .pipeline = NULL,
         .pgid = 0,
         .status = RUNNING,
-        .job_id = bg_jobs.len + 1,
     };
 
     int c = create_process(&job, f, node, data);
     if (c) return c;
 
-    bg_jobs.jobs[bg_jobs.len++] = job;
+    add_job_to_bg_jobs(&job);
+    printf("[%d]\t%d\n", job.job_id, job.pgid);
 
     return 0;
 }
 
 
-void add_job_to_bg_jobs(Job job) {
-    job.job_id = bg_jobs.len + 1;
-    bg_jobs.jobs[bg_jobs.len++] = job;
+void add_job_to_bg_jobs(Job *job) {
+    job->job_id = bg_jobs.len + 1;
+    bg_jobs.jobs[bg_jobs.len++] = *job;
 }
 
 

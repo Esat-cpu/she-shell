@@ -54,7 +54,7 @@ void start_bg_job_array(void);
 
 int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data);
 
-void add_job_to_bg_jobs(Job job);
+void add_job_to_bg_jobs(Job *job);
 
 void manage_bg_jobs(void);
 
