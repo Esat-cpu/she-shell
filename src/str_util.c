@@ -36,20 +36,20 @@ void add_chr_to_str(String *str, char ch) {
 }
 
 
-void add_span_to_str(String *str, char *start, char *end) {
+void add_span_to_str(String *str, const char *start, const char *end) {
     if (end - start <= 0) return;
     size_t count = end - start;
 
     ensure_capacity(str, count);
 
-    for (char *iter = start; iter != end; ++iter) {
+    for (const char *iter = start; iter != end; ++iter) {
         str->data[str->len++] = *iter;
     }
     str->data[str->len] = '\0';
 }
 
 
-void add_slice_to_str(String *str, char *buffer) {
+void add_slice_to_str(String *str, const char *buffer) {
     size_t count = strlen(buffer);
     if (count == 0) return;
 

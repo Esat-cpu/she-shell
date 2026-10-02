@@ -15,9 +15,9 @@ String new_string(void);
 
 void add_chr_to_str(String *str, char ch);
 
-void add_slice_to_str(String *str, char *buffer);
+void add_slice_to_str(String *str, const char *buffer);
 
-void add_span_to_str(String *str, char *start, char *end);
+void add_span_to_str(String *str, const char *start, const char *end);
 
 void add_int_to_str(String *str, int num);
 
