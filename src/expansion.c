@@ -19,17 +19,27 @@ static void split_normal_words(TokenArray* ta) {
     TokenArray ta_new = new_token_array();
 
     for_each_token (t, ta) {
-        if (t->quote_type == NORMAL) {
-            if (t->value[0] == '\0')
-                continue;
+        if (t->quote_type == NORMAL && t->token_type == T_WORD) {
+            if (t->value[0] == '\0' && ta_new.len > 0)
+                ta_new.tokens[ta_new.len-1].glued &= t->glued;
+
+            if ((t->value[0] == ' ' || t->value[0] == '\t') && ta_new.len > 0)
+                ta_new.tokens[ta_new.len-1].glued = 0;
+
+            size_t len = strlen(t->value);
+
+            if (len && (t->value[len-1] == ' ' || t->value[len-1] == '\t'))
+                t->glued = 0;
 
             char *c = strtok(t->value, " \t");
             if (!c) continue;
 
             add_token(&ta_new, c, NORMAL, t->token_type, t->glued);
 
-            while ((c = strtok(NULL, " \t")))
+            while ((c = strtok(NULL, " \t"))) {
+                ta_new.tokens[ta_new.len-1].glued = 0;
                 add_token(&ta_new, c, NORMAL, t->token_type, t->glued);
+            }
         }
         else
             add_token(
@@ -165,16 +175,22 @@ static void expand_glob_in_token(Token* token) {
     glob_t globbuf;
     String str = new_string();
 
-    glob(token->value, GLOB_NOCHECK, NULL, &globbuf);
+    int g = glob(token->value, 0, NULL, &globbuf);
 
-    for (size_t i = 0; i < globbuf.gl_pathc; ++i) {
-        add_chr_to_str(&str, ' ');
-        add_slice_to_str(&str, globbuf.gl_pathv[i]);
+    if (g == 0) {
+        for (size_t i = 0; i < globbuf.gl_pathc; ++i) {
+            if (i > 0)
+                add_chr_to_str(&str, ' ');
+            add_slice_to_str(&str, globbuf.gl_pathv[i]);
+        }
+
+        free(token->value);
+        token->value = str.data;
+        str.data = NULL;
     }
 
+    free(str.data);
     globfree(&globbuf);
-    free(token->value);
-    token->value = str.data;
 }
 
 

@@ -34,7 +34,7 @@ typedef enum {
 typedef struct {
     char* value;
 
-    // Only meaningful until expansion; glue_tokens() resets it to NORMAL.
+    // Only meaningful until expansion, glue_tokens()
     QuoteType quote_type;
 
     TokenType token_type;

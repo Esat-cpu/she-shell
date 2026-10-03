@@ -223,19 +223,42 @@ test_param_expansion_with_braces() {
 
 static void
 test_param_expansion_with_glued_tokens() {
-    TestCase c = {
+    setenv("U", "", 1);
+    setenv("S", " ", 1);
+    setenv("B", " a", 1);
+    setenv("E", "a ", 1);
+
+    TestCase c1 = {
         "echo $TEST_ENV_VAR\"$TEST_ENV_VAR\"'$TEST_ENV_VAR' a''b",
         {"echo", "testtest$TEST_ENV_VAR", "ab", NULL},
     };
+    TestCase c2 = {
+        "/'y'$U'z'/ /'y'$S'z'/ /'y'$B/ /$E'z'/",
+        {"/yz/", "/y", "z/", "/y", "a/", "/a", "z/", NULL},
+    };
 
-    tokenize(c.command, &ta);
+    tokenize(c1.command, &ta);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
 
-    ASSERT_EQ(arr, c.expected_args);
+    ASSERT_EQ(arr, c1.expected_args);
 
     free_tokens(ta);
+
+    tokenize(c2.command, &ta);
+    perform_expansions(&ta, &msg);
+
+    tokens_to_str_arr(ta.tokens, arr);
+
+    ASSERT_EQ(arr, c2.expected_args);
+
+    free_tokens(ta);
+
+    unsetenv("U");
+    unsetenv("S");
+    unsetenv("B");
+    unsetenv("E");
 }
 
 

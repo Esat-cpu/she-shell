@@ -58,20 +58,26 @@ void glue_tokens(TokenArray* ta) {
     TokenArray t_new = new_token_array();
     String str = new_string();
 
-    Token *current = &ta->tokens[0];
+    Token *cur = &ta->tokens[0];
 
-    while (current->value) {
-        add_slice_to_str(&str, current->value);
-
-        while (current->glued && current->token_type == T_WORD
-                && (current+1)->value && (current+1)->token_type == T_WORD
-        ) {
-            add_slice_to_str(&str, (++current)->value);
+    while (cur->value) {
+        if (cur->token_type != T_WORD) {
+            add_token(&t_new, cur->value, cur->quote_type, cur->token_type, 0);
+            cur++;
+            continue;
         }
 
-        add_token(&t_new, str.data, NORMAL, current->token_type, 0);
+        add_slice_to_str(&str, cur->value);
+
+        while (cur->glued
+                && (cur+1)->value && (cur+1)->token_type == T_WORD
+        ) {
+            add_slice_to_str(&str, (++cur)->value);
+        }
+
+        add_token(&t_new, str.data, cur->quote_type, T_WORD, 0);
         clear_str(&str);
-        current++;
+        cur++;
     }
 
     free(str.data);

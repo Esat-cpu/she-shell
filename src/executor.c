@@ -359,6 +359,12 @@ ExeResult execute_line(char* line, char **error_out) {
         return E_PARSE_ERROR;
     }
 
+    if (ta.len == 0) {
+        shell.exit_code = 0;
+        free_tokens(ta);
+        return E_SUCCESS;
+    }
+
     Node* root = parse(ta.tokens, ta.len, error_out);
 
     if (root == NULL) {
