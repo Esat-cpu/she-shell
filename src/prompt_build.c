@@ -17,7 +17,7 @@ void prompt_build(char* prompt, size_t prompt_size) {
         strcpy(prmpt_cwd, shell.cwd);
 
     // Showing the error code in the prompt if it is not 0
-    const char* fmt        = "\033[1;32m%s \033[1;34m%s\033[0m> ";
+    const char* fmt   = "\033[1;32m%s \033[1;34m%s\033[0m> ";
     const char* fmt_s = "\033[1;32m%s \033[1;34m%s \033[1;31m[%s]\033[0m> ";
     const char* fmt_d = "\033[1;32m%s \033[1;34m%s \033[1;31m[%d]\033[0m> ";
 
@@ -25,10 +25,10 @@ void prompt_build(char* prompt, size_t prompt_size) {
         snprintf(prompt, prompt_size, fmt, shell.user, prmpt_cwd);
 
     else if (shell.exit_code == 130)
-        snprintf(prompt, prompt_size, fmt_s, shell.user, prmpt_cwd, "SIGINT");
+        snprintf(prompt, prompt_size, fmt_s, shell.user, prmpt_cwd, "INT");
 
     else if (shell.exit_code == 148)
-        snprintf(prompt, prompt_size, fmt_s, shell.user, prmpt_cwd, "SIGTSTP");
+        snprintf(prompt, prompt_size, fmt_s, shell.user, prmpt_cwd, "TSTP");
 
     else
         snprintf(prompt, prompt_size, fmt_d,
