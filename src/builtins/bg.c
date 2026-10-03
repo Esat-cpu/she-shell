@@ -1,6 +1,5 @@
 #include <signal.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "job_control.h"
 #include "util.h"
@@ -82,7 +81,7 @@ int bg(int argc, char** argv) {
     job->notified = false;
     job->status = RUNNING;
     kill(-job->pgid, SIGCONT);
-    printf("[%d]\t%d\tcontinued\t%s\n", job->job_id, job->pgid, job->command);
+    print_job_message(*job, 1);
 
     return EXIT_SUCCESS;
 }

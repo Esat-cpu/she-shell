@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 
 #include "builtins/fg.h"
 #include "job_control.h"
@@ -80,6 +79,7 @@ int fg(int argc, char** argv) {
         .pgid     = job->pgid,
         .pipeline = job->pipeline,
         .command  = job->command,
+        .job_id   = job->job_id,
         .status   = RUNNING,
     };
 
@@ -89,8 +89,7 @@ int fg(int argc, char** argv) {
     job->command = NULL;
     job->pipeline = NULL;
 
-    printf("[%d]\t%d\tcontinued\t%s\n",
-                fg_job.job_id, fg_job.pgid, fg_job.command);
+    print_job_message(fg_job, 1);
 
     if (shell.interactive)
         tcsetpgrp(shell.terminal, fg_job.pgid);

@@ -165,6 +165,21 @@ void free_processes(Job* job) {
 BgJobs bg_jobs;
 
 
+void print_job_message(Job job, bool continued) {
+    if (continued) {
+        printf("[%d]\t%d\tcontinued\t%s\n", job.job_id, job.pgid, job.command);
+        return;
+    }
+
+    if (job.status == RUNNING)
+        printf("[%d]\t%d\t\t%s\n", job.job_id, job.pgid, job.command);
+    else if (job.status == STOPPED)
+        printf("[%d]\t%d\tstopped\t%s\n", job.job_id, job.pgid, job.command);
+    else if (job.status == COMPLETED)
+        printf("[%d]\t%d\tcompleted\t%s\n", job.job_id, job.pgid, job.command);
+}
+
+
 int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data) {
     Job job = {
         .pipeline = NULL,
@@ -176,7 +191,7 @@ int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data) {
     if (c) return c;
 
     add_job_to_bg_jobs(&job);
-    printf("[%d]\t%d\t%s\n", job.job_id, job.pgid, job.command);
+    print_job_message(job, 0);
 
     return 0;
 }
@@ -231,15 +246,13 @@ void manage_bg_jobs(void) {
             update_job_state(j);
 
             if (j->status == COMPLETED && !j->notified) {
-                printf("[%d]\t%d\tcompleted\t%s\n",
-                            j->job_id, j->pgid, j->command);
+                print_job_message(*j, 0);
                 free_processes(j);
                 j->notified = true;
             }
             else if (j->status == STOPPED) {
                 if (!j->notified)
-                    printf("[%d]\t%d\tstopped\t%s\n",
-                                j->job_id, j->pgid, j->command);
+                    print_job_message(*j, 0);
 
                 j->notified = true;
             }

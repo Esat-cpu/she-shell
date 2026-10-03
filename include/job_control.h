@@ -51,7 +51,7 @@ int mark_status(Job* job, pid_t pid, int status);
 
 void wait_for_job_blocking(Job* job);
 
-void start_bg_job_array(void);
+void print_job_message(Job job, bool continued);
 
 int add_bg_job(int (*f)(Node*, TaskData), Node* node, TaskData data);
 
