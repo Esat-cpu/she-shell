@@ -66,10 +66,10 @@ void tokenize(const char* input, TokenArray* t) {
 
         // Semicolon case
         if (*ch == ';' && status == NORMAL) {
-            if (add_token(t, str.data, NORMAL, type))
+            if (add_token(t, str.data, NORMAL, type, 0))
                 clear_str(&str);
 
-            add_token(t, ";", NORMAL, T_SEMI);
+            add_token(t, ";", NORMAL, T_SEMI, 0);
             continue;
         }
 
@@ -78,17 +78,17 @@ void tokenize(const char* input, TokenArray* t) {
         if (*ch == '|' && status == NORMAL) {
             const char *next_ch = ch+1;
 
-            if (add_token(t, str.data, NORMAL, type))
+            if (add_token(t, str.data, NORMAL, type, 0))
                 clear_str(&str);
 
             // PIPE Operator (|)
             if (*next_ch != '|') {
-                add_token(t, "|", NORMAL, T_PIPE);
+                add_token(t, "|", NORMAL, T_PIPE, 0);
                 continue;
             }
             // OR Operator (||)
             else {
-                add_token(t, "||", NORMAL, T_OR);
+                add_token(t, "||", NORMAL, T_OR, 0);
                 ch++;
                 continue;
             }
@@ -100,16 +100,16 @@ void tokenize(const char* input, TokenArray* t) {
 
             // AND Operator (&&)
             if (*next_ch == '&') {
-                if (add_token(t, str.data, NORMAL, type))
+                if (add_token(t, str.data, NORMAL, type, 0))
                     clear_str(&str);
 
-                add_token(t, "&&", NORMAL, T_AND);
+                add_token(t, "&&", NORMAL, T_AND, 0);
                 ch++;
                 continue;
             }
             // Background operator (&)
             else
-                add_token(t, "&", NORMAL, T_AMPER);
+                add_token(t, "&", NORMAL, T_AMPER, 0);
 
             continue;
         }
@@ -118,17 +118,17 @@ void tokenize(const char* input, TokenArray* t) {
         if (*ch == '>' && status == NORMAL) {
             const char *next_ch = ch+1;
 
-            if (add_token(t, str.data, NORMAL, type))
+            if (add_token(t, str.data, NORMAL, type, 0))
                 clear_str(&str);
 
             // >> operator
             if (*next_ch == '>') {
-                add_token(t, ">>", NORMAL, T_REDIR_OUT_APPEND);
+                add_token(t, ">>", NORMAL, T_REDIR_OUT_APPEND, 0);
                 ch++;
             }
             // > operator
             else
-                add_token(t, ">", NORMAL, T_REDIR_OUT);
+                add_token(t, ">", NORMAL, T_REDIR_OUT, 0);
 
             continue;
         }
@@ -140,7 +140,7 @@ void tokenize(const char* input, TokenArray* t) {
 
             // If it is a redirection operator
             if (*next_ch == '>') {
-                if (add_token(t, str.data, NORMAL, type))
+                if (add_token(t, str.data, NORMAL, type, 0))
                     clear_str(&str);
 
                 const char *next_next_ch = NULL;
@@ -148,12 +148,12 @@ void tokenize(const char* input, TokenArray* t) {
 
                 // 2>> operator
                 if (next_next_ch && *next_next_ch == '>') {
-                    add_token(t, "2>>", NORMAL, T_REDIR_ERR_OUT_APPEND);
+                    add_token(t, "2>>", NORMAL, T_REDIR_ERR_OUT_APPEND, 0);
                     ch += 2;
                 }
                 // 2> operator
                 else {
-                    add_token(t, "2>", NORMAL, T_REDIR_ERR_OUT);
+                    add_token(t, "2>", NORMAL, T_REDIR_ERR_OUT, 0);
                     ch++;
                 }
 
@@ -164,10 +164,10 @@ void tokenize(const char* input, TokenArray* t) {
         // Redirection in
         // < operator
         if (*ch == '<' && status == NORMAL) {
-            if (add_token(t, str.data, NORMAL, type))
+            if (add_token(t, str.data, NORMAL, type, 0))
                 clear_str(&str);
 
-            add_token(t, "<", NORMAL, T_REDIR_IN);
+            add_token(t, "<", NORMAL, T_REDIR_IN, 0);
             continue;
         }
 
@@ -180,7 +180,7 @@ void tokenize(const char* input, TokenArray* t) {
 
         // space case in normal mode
         if (*ch == ' ' && status == NORMAL) {
-            if (add_token(t, str.data, NORMAL, type))
+            if (add_token(t, str.data, NORMAL, type, 0))
                 clear_str(&str);
 
             space = true;
@@ -192,7 +192,7 @@ void tokenize(const char* input, TokenArray* t) {
         // double quote case
         if (*ch == '"') {
             if (status == NORMAL) {
-                if (add_token(t, str.data, NORMAL, type))
+                if (add_token(t, str.data, NORMAL, type, !space))
                     clear_str(&str);
 
                 status = DOUBLE_Q;
@@ -200,7 +200,9 @@ void tokenize(const char* input, TokenArray* t) {
             }
 
             if (status == DOUBLE_Q) {
-                if (add_token(t, str.data, DOUBLE_Q, type))
+                int glued = (*(ch+1) == ' ' || *(ch+1) == '\0') ? 0 : 1;
+
+                if (add_token(t, str.data, DOUBLE_Q, type, glued))
                     clear_str(&str);
 
                 status = NORMAL;
@@ -211,7 +213,7 @@ void tokenize(const char* input, TokenArray* t) {
         // single quote case
         if (*ch == '\'') {
             if (status == NORMAL) {
-                if (add_token(t, str.data, NORMAL, type))
+                if (add_token(t, str.data, NORMAL, type, !space))
                     clear_str(&str);
 
                 status = SINGLE_Q;
@@ -219,7 +221,9 @@ void tokenize(const char* input, TokenArray* t) {
             }
 
             if (status == SINGLE_Q) {
-                if (add_token(t, str.data, SINGLE_Q, type))
+                int glued = (*(ch+1) == ' ' || *(ch+1) == '\0') ? 0 : 1;
+
+                if (add_token(t, str.data, SINGLE_Q, type, glued))
                     clear_str(&str);
 
                 status = NORMAL;
@@ -231,7 +235,7 @@ void tokenize(const char* input, TokenArray* t) {
         add_chr_to_str(&str, *ch);
     }
 
-    add_token(t, str.data, NORMAL, type);
+    add_token(t, str.data, NORMAL, type, 0);
     t->tokens[t->len].value = NULL;
     free(str.data);
 }

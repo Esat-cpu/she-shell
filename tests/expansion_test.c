@@ -17,6 +17,7 @@ typedef struct {
 
 TokenArray ta;
 char* arr[MAX_ARGS];
+char *msg = NULL;
 
 
 static void
@@ -42,7 +43,6 @@ test_param_expansion_with_home_var() {
         {"echo", env_home, NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -61,7 +61,6 @@ test_param_expansion_unquoted() {
         {"echo", "test", "test", "word", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -80,7 +79,6 @@ test_param_expansion_double_quoted() {
         {"echo", "test", "test word", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -99,7 +97,6 @@ test_param_expansion_single_quoted() {
         {"echo", "$TEST_ENV_VAR", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -118,7 +115,6 @@ test_param_expansion_with_slash() {
         {"echo", "/hello/test/world", "/h/test", "word/w", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -139,7 +135,6 @@ test_param_expansion_exit_code() {
         {"echo", "42", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -159,7 +154,6 @@ test_param_expansion_digits() {
         {"echo", "test_arg", "foobar", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -178,7 +172,6 @@ test_param_expansion_dollar_sign_as_literal() {
         {"echo", "$", "$-", "foo$", "42$", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -199,7 +192,6 @@ test_param_expansion_undeclared_var() {
         {"echo", NULL},
     };
 
-    char *msg = NULL;
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -218,7 +210,24 @@ test_param_expansion_with_braces() {
         {"echo", "test", "test_arg", "${2}", NULL},
     };
 
-    char *msg = NULL;
+    tokenize(c.command, &ta);
+    perform_expansions(&ta, &msg);
+
+    tokens_to_str_arr(ta.tokens, arr);
+
+    ASSERT_EQ(arr, c.expected_args);
+
+    free_tokens(ta);
+}
+
+
+static void
+test_param_expansion_with_glued_tokens() {
+    TestCase c = {
+        "echo $TEST_ENV_VAR\"$TEST_ENV_VAR\"'$TEST_ENV_VAR' a''b",
+        {"echo", "testtest$TEST_ENV_VAR", "ab", NULL},
+    };
+
     tokenize(c.command, &ta);
     perform_expansions(&ta, &msg);
 
@@ -245,5 +254,6 @@ main() {
         test_param_expansion_dollar_sign_as_literal,
         test_param_expansion_undeclared_var,
         test_param_expansion_with_braces,
+        test_param_expansion_with_glued_tokens,
     );
 }

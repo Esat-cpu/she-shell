@@ -33,8 +33,16 @@ typedef enum {
 
 typedef struct {
     char* value;
+
+    // Only meaningful until expansion; glue_tokens() resets it to NORMAL.
     QuoteType quote_type;
+
     TokenType token_type;
+
+    // Non-zero if the next token is attached to this one (no whitespace
+    // between). Set only when a quote is reached; merged by glue_tokens()
+    // after expansion.
+    int glued;
 } Token;
 
 typedef struct {
@@ -47,7 +55,9 @@ typedef struct {
 TokenArray new_token_array(void);
 
 int add_token(TokenArray* t, char* value,
-                QuoteType quote_type, TokenType token_type);
+                QuoteType quote_type, TokenType token_type, int glued);
+
+void glue_tokens(TokenArray* ta);
 
 void free_tokens(TokenArray tokens);
 

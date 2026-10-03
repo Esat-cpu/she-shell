@@ -26,13 +26,14 @@ static void split_normal_words(TokenArray* ta) {
             char *c = strtok(t->value, " \t");
             if (!c) continue;
 
-            add_token(&ta_new, c, NORMAL, t->token_type);
+            add_token(&ta_new, c, NORMAL, t->token_type, t->glued);
 
             while ((c = strtok(NULL, " \t")))
-                add_token(&ta_new, c, NORMAL, t->token_type);
+                add_token(&ta_new, c, NORMAL, t->token_type, t->glued);
         }
         else
-            add_token(&ta_new, t->value, t->quote_type, t->token_type);
+            add_token(
+                    &ta_new, t->value, t->quote_type, t->token_type, t->glued);
     }
 
     free_tokens(*ta);
@@ -212,5 +213,8 @@ int perform_expansions(TokenArray* ta, char **error_out) {
     }
 
     split_normal_words(ta);
+
+    glue_tokens(ta);
+
     return 0;
 }
