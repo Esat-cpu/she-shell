@@ -121,6 +121,9 @@ static void setup(int argc, char** argv) {
     setenv("HOME", shell.home, 0);
     setenv("USER", shell.user, 0);
     setenv("SHELL", pw->pw_shell, 0);
+
+    setenv("PWD", shell.cwd, 1);
+    setenv("OLDPWD", shell.oldpwd, 1);
 }
 
 
