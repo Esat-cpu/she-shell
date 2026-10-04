@@ -11,6 +11,7 @@
 struct ArgFlags args = {
     .no_profile = false,
     .should_exit = false,
+    .login_shell = false,
     .command = NULL,
     .script = NULL,
     .script_index = 0,
@@ -25,7 +26,8 @@ static void print_usage(FILE* out_stream) {
             "\t-h, --help       Show this helper message\n"
             "\t-v, --version    Show version info\n"
             "\t-c <COMMAND>     Execute the given command line\n"
-            "\t--no-profile     Do not execute the startup file\n"
+            "\t--no-profile     Do not execute the startup files\n"
+            "\t-l, --login      Login shell\n"
     );
 }
 
@@ -51,9 +53,12 @@ void parse_arguments(int argc, char **argv) {
         else if (strcmp(argv[i], "--no-profile") == 0) {
             strcpy(argv[i], "-n");
         }
+        else if (strcmp(argv[i], "--login") == 0) {
+            strcpy(argv[i], "-l");
+        }
     }
 
-    while ((opt = getopt(argc, argv, "hvc:n")) != -1) {
+    while ((opt = getopt(argc, argv, "hvc:nl")) != -1) {
         switch (opt) {
             case 'h':
                 print_usage(stdout);
@@ -70,6 +75,9 @@ void parse_arguments(int argc, char **argv) {
             case 'n':
                 args.no_profile = true;
                 break;
+            case 'l':
+                args.login_shell = true;
+                break;
             default: /* '?' */
                 print_usage(stderr);
                 shell.exit_code = EXIT_FAILURE;
@@ -77,6 +85,9 @@ void parse_arguments(int argc, char **argv) {
                 return;
         }
     }
+
+    if (argv[0][0] == '-')
+        args.login_shell = true;
 
     if (optind < argc) {
         args.script = argv[optind];

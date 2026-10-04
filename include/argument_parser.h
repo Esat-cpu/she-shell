@@ -7,6 +7,7 @@
 struct ArgFlags {
     bool no_profile;
     bool should_exit;
+    bool login_shell;
     char* command;
     const char* script;
     int script_index;

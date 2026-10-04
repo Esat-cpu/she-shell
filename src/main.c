@@ -26,6 +26,9 @@ static const char* HIS_FILE = ".she_history";
 // The file that will be executed on startup after setup and parse_arguments
 // functions if --no-profile flag is not set.
 static const char* RC_FILE = ".sherc";
+// Read in login shells (-l, or argv[0] starting with '-'), unless
+// --no-profile is set.
+static const char* PROFILE = ".she_profile";
 
 static char* command = NULL;
 
@@ -125,14 +128,22 @@ int main(int argc, char** argv) {
     setup(argc, argv);
     parse_arguments(argc, argv);
 
+    // Execute profile file if it exists
+    if (args.login_shell && PROFILE && shell.home && !args.no_profile) {
+        char pro_path[PATH_MAX];
+        snprintf(pro_path, sizeof(pro_path), "%s/%s", shell.home, PROFILE);
+
+        if (access(pro_path, F_OK) == 0)
+            execute_file(pro_path);
+    }
+
     // Execute startup file if it exists
     if (RC_FILE && shell.interactive && shell.home && !args.no_profile) {
         char rc_path[PATH_MAX];
         snprintf(rc_path, sizeof(rc_path), "%s/%s", shell.home, RC_FILE);
 
-        if (access(rc_path, F_OK) == 0) {
+        if (access(rc_path, F_OK) == 0)
             execute_file(rc_path);
-        }
     }
 
     // Execute the command that is given as an argument
