@@ -39,6 +39,9 @@ static void print_version() {
 
 
 void parse_arguments(int argc, char **argv) {
+    if (argv[0][0] == '-')
+        args.login_shell = true;
+
     if (argc <= 1) return;
     int opt;
 
@@ -86,9 +89,6 @@ void parse_arguments(int argc, char **argv) {
                 return;
         }
     }
-
-    if (argv[0][0] == '-')
-        args.login_shell = true;
 
     if (optind < argc) {
         args.script = argv[optind];
