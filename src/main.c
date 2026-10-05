@@ -128,8 +128,11 @@ static void setup(int argc, char** argv) {
 
 
 int main(int argc, char** argv) {
-    setup(argc, argv);
+    set_shell_name(argv[0]);
     parse_arguments(argc, argv);
+    if (args.fast_exit) return shell.exit_code;
+
+    setup(argc, argv);
 
     // Execute profile file if it exists
     if (args.login_shell && PROFILE && shell.home && !args.no_profile) {

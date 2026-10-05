@@ -9,11 +9,12 @@
 
 
 struct ArgFlags args = {
-    .no_profile = false,
-    .should_exit = false,
-    .login_shell = false,
-    .command = NULL,
-    .script = NULL,
+    .no_profile   = false,
+    .should_exit  = false,
+    .fast_exit    = false,
+    .login_shell  = false,
+    .command      = NULL,
+    .script       = NULL,
     .script_index = 0,
 };
 
@@ -62,11 +63,11 @@ void parse_arguments(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 print_usage(stdout);
-                args.should_exit = true;
+                args.fast_exit = true;
                 return;
             case 'v':
                 print_version();
-                args.should_exit = true;
+                args.fast_exit = true;
                 return;
             case 'c':
                 args.command = optarg;
@@ -81,7 +82,7 @@ void parse_arguments(int argc, char **argv) {
             default: /* '?' */
                 print_usage(stderr);
                 shell.exit_code = EXIT_FAILURE;
-                args.should_exit = true;
+                args.fast_exit = true;
                 return;
         }
     }
