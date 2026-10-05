@@ -65,9 +65,8 @@ int fg(int argc, char** argv) {
 
     // With no args, use the last alive job in the bg array
     else {
-        for_each_bg_job(j) {
+        for_each_bg_job(j)
             if (j->status == STOPPED || j->status == RUNNING) job = j;
-        }
 
         if (!job) {
             print_err(argv[0], "No job found");

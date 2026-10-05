@@ -60,13 +60,7 @@ static void set_shell_name(const char *argv0) {
 }
 
 
-// This will be executed on shell's startup
-static void setup(int argc, char** argv) {
-    atexit(clean_exit);
-    set_shell_name(argv[0]);
-    shell.argc = argc;
-    shell.argv = argv;
-
+static void get_user_info(void) {
     struct passwd* pw = getpwuid(getuid());
 
     if (!(shell.home = getenv("HOME")))
@@ -74,33 +68,11 @@ static void setup(int argc, char** argv) {
 
     shell.user = pw->pw_name;
 
-    if (isatty(STDIN_FILENO)) {
-        shell.interactive = true;
+    // Terminal fd
+    int title_fd = open("/dev/tty", O_RDWR | O_CLOEXEC);
+    shell.terminal = (title_fd < 0) ? STDIN_FILENO : title_fd;
 
-        while (tcgetpgrp(shell.terminal) != (shell.pgid = getpgrp()))
-            kill(-shell.pgid, SIGTTIN);
-
-        // Handle signals
-        signal(SIGINT,  sigint_handler);
-        signal(SIGTSTP, SIG_IGN);
-        signal(SIGQUIT, SIG_IGN);
-        signal(SIGTTIN, SIG_IGN);
-        signal(SIGTTOU, SIG_IGN);
-
-        // Terminal fd
-        int title_fd = open("/dev/tty", O_RDWR);
-        shell.terminal = (title_fd < 0) ? STDIN_FILENO : title_fd;
-
-        // Shell is the process group leader
-        // This group is terminal's foreground process group
-        if (tcgetpgrp(shell.terminal) != shell.pgid) {
-            setpgid(0, 0);
-            shell.pgid = getpgrp();
-            tcsetpgrp(shell.terminal, shell.pgid);
-        }
-    }
-    else
-        shell.interactive = false;
+    shell.pgid = getpgrp();
 
     // Set working directories
     if (getcwd(shell.cwd, sizeof(shell.cwd)) == NULL) {
@@ -108,14 +80,6 @@ static void setup(int argc, char** argv) {
         exit(errno);
     }
     strcpy(shell.oldpwd, shell.cwd);
-
-    // Read history from HIS_FILE
-    if (shell.interactive && shell.home && HIS_FILE) {
-        char history_file[PATH_MAX];
-        snprintf(history_file, sizeof(history_file),
-                "%s/%s", shell.home, HIS_FILE);
-        read_history(history_file);
-    }
 
     // Set environment variables if not set
     setenv("HOME", shell.home, 0);
@@ -127,7 +91,43 @@ static void setup(int argc, char** argv) {
 }
 
 
+static void setup(int argc, char** argv) {
+    atexit(clean_exit);
+    shell.argc = argc;
+    shell.argv = argv;
+
+    shell.interactive = isatty(STDIN_FILENO) && !args.command && !args.script;
+
+    if (shell.interactive) {
+        while (tcgetpgrp(shell.terminal) != shell.pgid)
+            kill(-shell.pgid, SIGTTIN);
+
+        // Handle signals
+        signal(SIGINT,  sigint_handler);
+        signal(SIGTSTP, SIG_IGN);
+        signal(SIGQUIT, SIG_IGN);
+        signal(SIGTTIN, SIG_IGN);
+        signal(SIGTTOU, SIG_IGN);
+
+        if (getpid() != shell.pgid) {
+            setpgid(0, 0);
+            shell.pgid = getpgrp();
+            tcsetpgrp(shell.terminal, shell.pgid);
+        }
+    }
+
+    // Read history from HIS_FILE
+    if (shell.interactive && shell.home && HIS_FILE) {
+        char history_file[PATH_MAX];
+        snprintf(history_file, sizeof(history_file),
+                "%s/%s", shell.home, HIS_FILE);
+        read_history(history_file);
+    }
+}
+
+
 int main(int argc, char** argv) {
+    get_user_info();
     set_shell_name(argv[0]);
     parse_arguments(argc, argv);
     if (args.fast_exit) return shell.exit_code;
@@ -184,6 +184,8 @@ int main(int argc, char** argv) {
         shell.home = getenv("HOME");
 
         if (shell.interactive) {
+            tcsetpgrp(shell.terminal, shell.pgid);
+
             char prompt[PATH_MAX];
             prompt_build(prompt, PATH_MAX);
 

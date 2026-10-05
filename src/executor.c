@@ -167,19 +167,14 @@ static void execute_cmd_node(Node* node, TaskData data) {
     data.apply_redir   = false;
 
     if (data.fg) {
-        int a = create_process(&job, worker, node, data);
-
-        if (a == EXIT_SUCCESS) {
+        if (create_process(&job, worker, node, data) == EXIT_SUCCESS)
             wait_for_job_blocking(&job);
-
-            // Set terminal's foreground process group to shell's
-            if (shell.interactive)
-                tcsetpgrp(shell.terminal, shell.pgid);
-        }
     }
-    else {
+    else
         add_bg_job(worker, node, data);
-    }
+
+    if (shell.interactive)
+        tcsetpgrp(shell.terminal, shell.pgid);
 
     restore_redirections(node->cmd.redir_list);
 }
@@ -319,7 +314,7 @@ static void execute_ast(Node* root, TaskData data) {
             execute_ast(root->operator.right, data);
     }
 
-    // If the operator is ampersand, God help me
+    // If the operator is ampersand, execute left pipeline as background job
     else if (root->type == T_AMPER) {
         TaskData bgdata = data;
         bgdata.fg = false;
