@@ -65,7 +65,8 @@ void tokenize(const char* input, TokenArray* t) {
         }
 
         // Semicolon case
-        if (*ch == ';' && status == NORMAL) {
+        // or commands that separated with '\n'
+        if ((*ch == ';' || *ch == '\n') && status == NORMAL) {
             if (add_token(t, str.data, NORMAL, type, 0))
                 clear_str(&str);
 
