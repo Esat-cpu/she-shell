@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "test_lib.h"
 #include "token.h"
 #include "tokenize.h"
@@ -13,13 +15,14 @@ typedef struct {
 
 TokenArray ta;
 char* arr[MAX_ARGS];
+char *err;
 
 
 static void
 test_one_word() {
     TestCase c = {"helo", {"helo", NULL}};
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -33,7 +36,7 @@ static void
 test_words_with_space() {
     TestCase c = {"hello world test", {"hello", "world", "test", NULL}};
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -46,7 +49,7 @@ static void
 test_words_with_escape_and_space() {
     TestCase c = {"hello\\ world test", {"hello world", "test", NULL}};
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -62,7 +65,7 @@ test_words_with_many_spaces() {
         {"echo", "hello", "world", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -79,7 +82,7 @@ test_double_quotes() {
         {"echo", "hello 'world'", "test", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -95,7 +98,7 @@ test_double_quotes_with_escape() {
         {"echo", "hello \" \\world", "test", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -111,7 +114,7 @@ test_single_quotes_with_double_quotes_and_escape() {
         {"echo", "\"hello\" \\", "world", "test", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -128,7 +131,7 @@ test_status_of_normal_tokens() {
         {0},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
 
     ASSERT_EQ(ta.tokens[0].quote_type, NORMAL);
 
@@ -143,7 +146,7 @@ test_status_of_double_quoted_tokens() {
         {0},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
 
     ASSERT_EQ(ta.tokens[0].quote_type, NORMAL);
     ASSERT_EQ(ta.tokens[1].quote_type, DOUBLE_Q);
@@ -159,7 +162,7 @@ test_status_of_single_quoted_tokens() {
         {0},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
 
     ASSERT_EQ(ta.tokens[0].quote_type, SINGLE_Q);
     ASSERT_EQ(ta.tokens[1].quote_type, NORMAL);
@@ -176,7 +179,7 @@ test_token_with_AND_operator() {
         {"echo", "helo", "&&", "echo", "world", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -193,7 +196,7 @@ test_token_with_OR_operator() {
         {"echo", "helo", "||", "echo", "world", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -212,7 +215,7 @@ test_token_with_pipe_operator() {
         {"echo", "|", "cat", "|", "tr", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -233,7 +236,7 @@ test_token_with_redirection_operators() {
         {"echo", ">", "first", ">", "second", "2>", "and2", ">>", "so", "2>>", "on"},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &err);
     tokens_to_str_arr(ta.tokens, arr);
 
     ASSERT_EQ(arr, c.expected_tokens);
@@ -250,6 +253,23 @@ test_token_with_redirection_operators() {
     ASSERT_EQ(ta.tokens[10].token_type, T_WORD);
 
     free_tokens(ta);
+}
+
+
+static void
+test_unterminated_quote() {
+    TestCase c = {
+        "echo \"helo",
+        {0},
+    };
+
+    err = NULL;
+    int l = tokenize(c.command, &ta, &err);
+
+    ASSERT_EQ(l, EXIT_FAILURE);
+    ASSERT_EQ(err != NULL, 1);
+
+    free(err);
 }
 
 
@@ -271,5 +291,6 @@ main() {
         test_token_with_OR_operator,
         test_token_with_pipe_operator,
         test_token_with_redirection_operators,
+        test_unterminated_quote,
     );
 }

@@ -6,6 +6,7 @@
 #include "tokenize.h"
 #include "token.h"
 #include "str_util.h"
+#include "util.h"
 
 #define MAX_BUF 4096
 
@@ -20,7 +21,7 @@ void tokens_to_str_arr(Token* tokens, char** arr) {
 
 
 // tokenize
-void tokenize(const char* input, TokenArray* t) {
+int tokenize(const char* input, TokenArray* t, char **error_out) {
     QuoteType status = NORMAL;
     TokenType type   = T_WORD;
     bool escape = false;
@@ -176,7 +177,7 @@ void tokenize(const char* input, TokenArray* t) {
         if (*ch == '#' && space) {
             t->tokens[t->len].value = NULL;
             free(str.data);
-            return;
+            return EXIT_SUCCESS;
         }
 
         // space case in normal mode
@@ -236,7 +237,14 @@ void tokenize(const char* input, TokenArray* t) {
         add_chr_to_str(&str, *ch);
     }
 
+    if (status != NORMAL) {
+        free(str.data);
+        free_tokens(*t);
+        *error_out = sstrdup("unterminated quote");
+        return EXIT_FAILURE;
+    }
+
     add_token(t, str.data, NORMAL, type, 0);
-    t->tokens[t->len].value = NULL;
     free(str.data);
+    return EXIT_SUCCESS;
 }

@@ -18,6 +18,7 @@ typedef struct {
 TokenArray ta;
 char* arr[MAX_ARGS];
 char *msg = NULL;
+char *lex_er = NULL;
 
 
 static void
@@ -43,7 +44,7 @@ test_param_expansion_with_home_var() {
         {"echo", env_home, NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -61,7 +62,7 @@ test_param_expansion_unquoted() {
         {"echo", "test", "test", "word", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -79,7 +80,7 @@ test_param_expansion_double_quoted() {
         {"echo", "test", "test word", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -97,7 +98,7 @@ test_param_expansion_single_quoted() {
         {"echo", "$TEST_ENV_VAR", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -115,7 +116,7 @@ test_param_expansion_with_slash() {
         {"echo", "/hello/test/world", "/h/test", "word/w", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -135,7 +136,7 @@ test_param_expansion_exit_code() {
         {"echo", "42", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -154,7 +155,7 @@ test_param_expansion_digits() {
         {"echo", "test_arg", "foobar", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -172,7 +173,7 @@ test_param_expansion_dollar_sign_as_literal() {
         {"echo", "$", "$-", "foo$", "42$", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -192,7 +193,7 @@ test_param_expansion_undeclared_var() {
         {"echo", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -210,7 +211,7 @@ test_param_expansion_with_braces() {
         {"echo", "test", "test_arg", "${2}", NULL},
     };
 
-    tokenize(c.command, &ta);
+    tokenize(c.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -237,7 +238,7 @@ test_param_expansion_with_glued_tokens() {
         {"/yz/", "/y", "z/", "/y", "a/", "/a", "z/", NULL},
     };
 
-    tokenize(c1.command, &ta);
+    tokenize(c1.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);
@@ -246,7 +247,7 @@ test_param_expansion_with_glued_tokens() {
 
     free_tokens(ta);
 
-    tokenize(c2.command, &ta);
+    tokenize(c2.command, &ta, &lex_er);
     perform_expansions(&ta, &msg);
 
     tokens_to_str_arr(ta.tokens, arr);

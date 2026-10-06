@@ -8,6 +8,6 @@
 
 void tokens_to_str_arr(Token* tokens, char** arr);
 
-void tokenize(const char* command, TokenArray* t);
+int tokenize(const char* command, TokenArray* t, char **error_out);
 
 #endif

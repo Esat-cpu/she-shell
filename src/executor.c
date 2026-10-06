@@ -342,10 +342,14 @@ ExeResult execute_line(char* line, char **error_out) {
         return E_SUCCESS;
 
     TokenArray ta;
-    tokenize(line, &ta);
+    if (tokenize(line, &ta, error_out) == EXIT_FAILURE) {
+        if (shell.exit_code == 0)
+            shell.exit_code = EXIT_FAILURE;
 
-    int e = perform_expansions(&ta, error_out);
-    if (e) {
+        return E_PARSE_ERROR;
+    }
+
+    if (perform_expansions(&ta, error_out)) {
         free_tokens(ta);
 
         if (shell.exit_code == 0)

@@ -114,7 +114,8 @@ ast_to_str(Node* node, char *out) {
 
 static void
 command_to_parsed_str(const char* command, char *out, char **error_out) {
-    tokenize(command, &ta);
+    char *lex_er;
+    tokenize(command, &ta, &lex_er);
 
     char *error_message = NULL;
 
