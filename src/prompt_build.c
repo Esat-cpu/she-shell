@@ -5,6 +5,14 @@
 #include "prompt_build.h"
 #include "shell.h"
 
+#define IG_S "\001" // RL_PROMPT_START_IGNORE
+#define IG_E "\002" // RL_PROMPT_END_IGNORE
+
+#define GREEN(X) IG_S "\033[1;32m" IG_E X
+#define BLUE(X)  IG_S "\033[1;34m" IG_E X
+#define RED(X)   IG_S "\033[1;31m" IG_E X
+#define RESET    IG_S "\033[0m" IG_E
+
 #define SIG_ENTRY(s) { s, &#s[3] }
 
 
@@ -39,9 +47,9 @@ void prompt_build(char* prompt, size_t prompt_size) {
         strcpy(prmpt_cwd, shell.cwd);
 
     // Showing the error code in the prompt if it is not 0
-    const char* fmt   = "\033[1;32m%s \033[1;34m%s\033[0m> ";
-    const char* fmt_s = "\033[1;32m%s \033[1;34m%s \033[1;31m[%s]\033[0m> ";
-    const char* fmt_d = "\033[1;32m%s \033[1;34m%s \033[1;31m[%d]\033[0m> ";
+    const char* fmt   = GREEN("%s") " " BLUE("%s") RESET "> ";
+    const char* fmt_s = GREEN("%s") " " BLUE("%s") " " RED("[%s]") RESET "> ";
+    const char* fmt_d = GREEN("%s") " " BLUE("%s") " " RED("[%d]") RESET "> ";
 
     const char* sig_name = signal_name_from_exit_code(shell.exit_code);
 
