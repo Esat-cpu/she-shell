@@ -26,7 +26,7 @@ static bool fail_flag = false;
 static void
 sprint_arr(char** args, char* out) {
     if (args == NULL) {
-        snprintf(out, ARR_STR_BUFF_SIZE, "NULL");
+        snprintf(out, ARR_STR_BUFF_SIZE, "(null)");
         return;
     }
 
@@ -48,7 +48,12 @@ sprint_arr(char** args, char* out) {
 // Asserts that two strings are equal.
 void
 assert_eq_str(const char* str1, const char* str2, const char* func, const char* file, int line) {
-    if (strcmp(str1, str2) == 0) {
+    bool equal = (str1 && str2) ? strcmp(str1, str2) == 0 : (!str1 && !str2);
+
+    if (!str1) str1 = "(null)";
+    if (!str2) str2 = "(null)";
+
+    if (equal) {
         success_flag = true;
     }
     else {
