@@ -24,11 +24,11 @@ static void print_usage(FILE* out_stream) {
             "Usage: %s [OPTIONS] [SCRIPT FILE [ARG1,ARG2,...]]\n", shell.name);
 
     fprintf(out_stream, "Options:\n"
-            "\t-h, --help       Show this helper message\n"
-            "\t-v, --version    Show version info\n"
-            "\t-c <COMMAND>     Execute the given command line\n"
-            "\t--no-profile     Do not execute the startup files\n"
-            "\t-l, --login      Login shell\n"
+            "\t-h, --help           Show this helper message\n"
+            "\t-v, --version        Show version info\n"
+            "\t-c <COMMAND>         Execute the given command line\n"
+            "\t-n, --no-profile     Do not execute the startup files\n"
+            "\t-l, --login          Login shell\n"
     );
 }
 
@@ -59,6 +59,9 @@ void parse_arguments(int argc, char **argv) {
         }
         else if (strcmp(argv[i], "--login") == 0) {
             strcpy(argv[i], "-l");
+        }
+        else if (strcmp(argv[i], "--") == 0) {
+            break;
         }
     }
 
