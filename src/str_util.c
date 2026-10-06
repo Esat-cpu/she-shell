@@ -8,11 +8,14 @@
 
 
 static void ensure_capacity(String* str, size_t n) {
-    if (str->cap == 0) str->cap = 16;
+    size_t cap = str->_cap;
 
-    while ((str->len + n) >= str->cap) {
-        str->cap *= 2;
-        str->data = srealloc(str->data, str->cap);
+    while ((str->len + n) >= cap)
+        cap *= 2;
+
+    if (cap != str->_cap) {
+        str->data = srealloc(str->data, cap);
+        str->_cap = cap;
     }
 }
 
@@ -21,7 +24,7 @@ String new_string(void) {
     String str;
 
     str.data = smalloc(START_BUFFER_SIZE);
-    str.cap = START_BUFFER_SIZE;
+    str._cap = START_BUFFER_SIZE;
     str.len = 0;
     str.data[0] = '\0';
 

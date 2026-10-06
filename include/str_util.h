@@ -7,7 +7,7 @@
 typedef struct {
     char* data;
     size_t len;
-    size_t cap;
+    size_t _cap;
 } String;
 
 

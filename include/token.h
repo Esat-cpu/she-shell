@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
     Token* tokens;
     size_t len;
-    size_t cap;
+    size_t _cap;
 } TokenArray;
 
 

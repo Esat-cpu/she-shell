@@ -9,11 +9,14 @@
 
 
 static void ensure_capacity(TokenArray* t, size_t n) {
-    if (t->cap == 0) t->cap = 16;
+    size_t cap = t->_cap;
 
-    while ((t->len + n) >= t->cap) {
-        t->cap *= 2;
-        t->tokens = srealloc(t->tokens, t->cap * sizeof(Token));
+    while ((t->len + n) >= cap)
+        cap *= 2;
+
+    if (cap != t->_cap) {
+        t->tokens = srealloc(t->tokens, cap * sizeof(Token));
+        t->_cap = cap;
     }
 }
 
@@ -23,7 +26,7 @@ TokenArray new_token_array(void) {
 
     t.tokens = smalloc(START_TOKEN_COUNT * sizeof(Token));
     t.len = 0;
-    t.cap = START_TOKEN_COUNT;
+    t._cap = START_TOKEN_COUNT;
     t.tokens[0].value = NULL;  // terminator
 
     return t;
